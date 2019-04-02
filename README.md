@@ -1,1 +1,1 @@
-# apps.newslabs.tools.bbc.co.uk
+# Generic secure front-end proxy to S3 apps.
