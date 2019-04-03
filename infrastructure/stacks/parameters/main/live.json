@@ -5,7 +5,7 @@
         "DomainNameBase": "ee74d3541ebec4a3.xhst.bbci.co.uk.",
         "Environment": "live",
         "MinSize": 1,
-        "MaxSize": 1,
+        "MaxSize": 2,
         "DesiredCapacity": 1,
         "UpdatePauseTime": "PT0S",
         "UpdateMinInService": 0,
