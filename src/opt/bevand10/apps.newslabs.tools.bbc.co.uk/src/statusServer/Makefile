@@ -8,4 +8,4 @@ compile:
 	ls -lh $(bin)
 
 run:
-	./$(bin) 8080 .
+	./$(bin)
