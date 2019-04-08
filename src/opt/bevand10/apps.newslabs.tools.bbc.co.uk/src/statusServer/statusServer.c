@@ -25,8 +25,10 @@
 void web(int fd, int hit)
 {
 	int j, file_fd, buflen, retlen;
+    int addHeaders=0;
 	long i, ret, len;
 	static char request[BUFSIZE+1]; /* static so zero filled */
+	static char request2[BUFSIZE+1]; /* static so zero filled */
 	static char retval[BUFSIZE+1]; /* static so zero filled */
 
 	ret =read(fd,request,BUFSIZE); 	/* read Web request in one go */
@@ -36,9 +38,12 @@ void web(int fd, int hit)
 	if(ret > 0 && ret < BUFSIZE)	/* return code is valid chars */
 		request[ret]=0;		/* terminate the request */
 	else request[0]=0;
-	for(i=0;i<ret;i++)	/* remove CF and LF characters */
+
+	for(i=0;i<ret;i++){	/* remove CF and LF characters */
+        request2[i]=request[i];
 		if(request[i] == '\r' || request[i] == '\n')
 			request[i]='*';
+    }
 	//logger(LOG,"request",request,hit);
 	if( strncmp(request,"GET ",4) && strncmp(request,"get ",4) ) {
 		//logger(FORBIDDEN,"Only simple GET operation supported",request,fd);
@@ -51,23 +56,28 @@ void web(int fd, int hit)
 		}
 	}
 
+    /* replay the request */
+	if( !strncmp(&request[0],"GET /request",12) || !strncmp(&request[0],"get /request",12) ) {
+        /* convert no filename to index file */
+		(void)strcpy(retval, request2);
+    }
+
+    /* status response - health check */
 	if( !strncmp(&request[0],"GET /status",11) || !strncmp(&request[0],"get /status",11) ) {
         /* convert no filename to index file */
 		(void)strcpy(retval,"ok");
     }
 
+    /* default */
 	if( !strncmp(&request[0],"GET /\0",6) || !strncmp(&request[0],"get /\0",6) ) {
         /* convert no filename to index file */
 		(void)strcpy(retval,"hello");
     }
 
-
 	/* work out the file type and check we support it */
 	retlen=strlen(retval);
 
     if (retlen>0) {
-
-        (void)printf("Request: %s  Response: %s\n", request, retval);
 
         /* build the entire response */
         (void)sprintf(request,"HTTP/1.1 200 OK\nServer: statusServer/%d.0\nContent-Length: %d\nConnection: close\nContent-Type: text/html\n\n%s", VERSION, retlen, retval);
@@ -79,7 +89,8 @@ void web(int fd, int hit)
     }
     else {
         /* build the entire response */
-        (void)sprintf(request,"HTTP/1.1 404 Not Found\nServer: statusServer/%d.0\nContent-Length: %d\nConnection: close\nContent-Type: text/html\n\n%s", VERSION, retlen, retval);
+        //(void)sprintf(request,"HTTP/1.1 404 Not Found\nServer: statusServer/%d.0\nContent-Length: %d\nConnection: close\nContent-Type: text/html\n\n%s", VERSION, retlen, retval);
+        (void)sprintf(request,"HTTP/1.1 200 OK\nServer: statusServer/%d.0\nContent-Length: %d\nConnection: close\nContent-Type: text/html\n\n%s\n%s", VERSION, retlen, retval, request2);
 
         /* print to the web socket */
 	    (void)write(fd,request,strlen(request));
